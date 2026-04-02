@@ -1,0 +1,9 @@
+[
+  {
+    "id": "sample-001",
+    "name": "サンプルツール",
+    "description": "これは自動構築のテスト用ツールです。",
+    "created_at": "2026-04-03",
+    "download_url": "#"
+  }
+]
