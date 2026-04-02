@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>社内DXツールポータル</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .card-hover {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="gradient-bg text-white shadow-xl">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight">社内DXツールポータル</h1>
+          </div>
+          <p class="text-blue-100 text-sm">AIが自律的に作成したツールを配布・管理するプラットフォーム</p>
+        </div>
+        <div class="hidden md:flex items-center gap-4">
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 text-sm">
+            <span class="text-blue-200">総ツール数</span>
+            <span id="tool-count" class="ml-2 font-bold text-white text-lg">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="mt-6 relative">
+        <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0" />
+        </svg>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="ツールを検索する..."
+          class="w-full pl-12 pr-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-blue-200 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/40 focus:bg-white/20 transition"
+        />
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-6 py-10">
+
+    <!-- Status Bar -->
+    <div id="status-bar" class="mb-8 flex items-center gap-2 text-sm text-gray-500">
+      <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+      <span>データを読み込み中...</span>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error-msg" class="hidden mb-8 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+      <svg class="w-5 h-5 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <div>
+        <p class="font-semibold text-red-700">データの読み込みに失敗しました</p>
+        <p id="error-detail" class="text-red-600 text-sm mt-1"></p>
+      </div>
+    </div>
+
+    <!-- Tool Grid -->
+    <div id="tool-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <!-- Skeleton Loaders -->
+      <div class="skeleton rounded-2xl h-48"></div>
+      <div class="skeleton rounded-2xl h-48"></div>
+      <div class="skeleton rounded-2xl h-48"></div>
+      <div class="skeleton rounded-2xl h-48"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-20">
+      <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+      </div>
+      <p class="text-gray-500 text-lg font-medium">ツールが見つかりません</p>
+      <p class="text-gray-400 text-sm mt-1">検索条件を変えて再試行してください</p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-200 bg-white mt-16">
+    <div class="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between text-sm text-gray-400">
+      <span>社内DXツールポータル &copy; 2026</span>
+      <span>Powered by AI Auto-Generation</span>
+    </div>
+  </footer>
+
+  <script>
+    const REGISTRY_URL = './tools_registry.json';
+    let allTools = [];
+
+    // カードのHTMLを生成
+    function createToolCard(tool) {
+      const badgeColors = [
+        'bg-blue-100 text-blue-700',
+        'bg-purple-100 text-purple-700',
+        'bg-green-100 text-green-700',
+        'bg-orange-100 text-orange-700',
+        'bg-pink-100 text-pink-700',
+      ];
+      const colorClass = badgeColors[Math.abs(tool.id.charCodeAt(0)) % badgeColors.length];
+
+      const isDownloadable = tool.download_url && tool.download_url !== '#';
+
+      return `
+        <div class="card-hover bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+          <!-- Card Header -->
+          <div class="p-5 pb-3 flex items-start gap-3">
+            <div class="w-12 h-12 rounded-xl ${colorClass.split(' ')[0]} flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6 ${colorClass.split(' ')[1]}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="font-semibold text-gray-900 text-base leading-snug truncate">${escapeHtml(tool.name)}</h3>
+              <span class="inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${colorClass} font-medium">${escapeHtml(tool.id)}</span>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="px-5 pb-4 flex-1">
+            <p class="text-gray-500 text-sm leading-relaxed line-clamp-3">${escapeHtml(tool.description)}</p>
+          </div>
+
+          <!-- Footer -->
+          <div class="px-5 py-4 border-t border-gray-50 bg-gray-50/50 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-1.5 text-xs text-gray-400">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>${escapeHtml(tool.created_at)}</span>
+            </div>
+            <a
+              href="${escapeHtml(tool.download_url)}"
+              ${isDownloadable ? 'download' : ''}
+              class="${isDownloadable
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-400 cursor-not-allowed'
+              } text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+              ${!isDownloadable ? 'onclick="return false;"' : ''}
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              ${isDownloadable ? 'ダウンロード' : '準備中'}
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // XSS対策
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // グリッドを更新
+    function renderTools(tools) {
+      const grid = document.getElementById('tool-grid');
+      const empty = document.getElementById('empty-state');
+
+      if (tools.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        grid.innerHTML = tools.map(createToolCard).join('');
+      }
+    }
+
+    // データ取得
+    async function loadTools() {
+      const statusBar = document.getElementById('status-bar');
+      const errorMsg  = document.getElementById('error-msg');
+
+      try {
+        const res = await fetch(REGISTRY_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+
+        allTools = await res.json();
+
+        document.getElementById('tool-count').textContent = allTools.length;
+        statusBar.innerHTML = `
+          <div class="w-2 h-2 rounded-full bg-green-400"></div>
+          <span>${allTools.length} 件のツールを読み込みました</span>
+        `;
+        renderTools(allTools);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('tool-grid').innerHTML = '';
+        statusBar.classList.add('hidden');
+        errorMsg.classList.remove('hidden');
+        document.getElementById('error-detail').textContent = err.message;
+      }
+    }
+
+    // 検索フィルター
+    document.getElementById('search-input').addEventListener('input', function () {
+      const q = this.value.trim().toLowerCase();
+      const filtered = allTools.filter(t =>
+        t.name.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q) ||
+        t.id.toLowerCase().includes(q)
+      );
+      renderTools(filtered);
+    });
+
+    // 起動
+    loadTools();
+  </script>
+</body>
+</html>
